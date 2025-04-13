@@ -1,9 +1,25 @@
 package app
 
-import "github.com/gin-gonic/gin"
+import (
+	"strings"
 
-func New() *app {
-	return &app{}
+	"github.com/gin-gonic/gin"
+	"github.com/ooqls/go-log"
+	"go.uber.org/zap"
+)
+
+func New(appName string) *app {
+	return &app{
+		appName: appName,
+		registryPath: registryPath,
+		rsaPrivKeyPath: RsaPrivKeyPath,
+		rsaPubKeyPath: RsaPubKeyPath,
+		jwtPrivKeyPath: JwtPrivKeyPath,
+		jwtPubKeyPath: JwtPubKeyPath,
+		SQLFiles: strings.Split(sqlFiles, ","),
+		e: gin.New(),
+		l: log.NewLogger(appName),
+	}
 }
 
 type app struct {
@@ -20,6 +36,7 @@ type app struct {
 	startup        func(c *gin.Engine) error
 	onPanic        func(err interface{})
 	e              *gin.Engine
+	l *zap.Logger
 }
 
 func (a *app) WithRegistryPath(path string) *app {
@@ -36,11 +53,6 @@ func (a *app) WithRsaPath(privKeyPath, pubKeyPath string) *app {
 func (a *app) WithJwtPath(privKeyPath, pubKeyPath string) *app {
 	a.jwtPrivKeyPath = privKeyPath
 	a.jwtPubKeyPath = pubKeyPath
-	return a
-}
-
-func (a *app) WithAppName(name string) *app {
-	a.appName = name
 	return a
 }
 
