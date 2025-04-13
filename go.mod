@@ -2,14 +2,12 @@ module github.com/ooqls/go-app
 
 go 1.24.2
 
-replace github.com/ooqls/go-log => /Users/Samuelreynolds/github.com/ooqls/go-log
-
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/ooqls/go-crypto v1.0.3
 	github.com/ooqls/go-db v1.0.6
-	github.com/ooqls/go-log v0.1.1
+	github.com/ooqls/go-log v0.2.0
 	github.com/ooqls/go-registry v0.1.6
 	go.uber.org/zap v1.27.0
 )
