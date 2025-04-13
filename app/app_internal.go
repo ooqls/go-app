@@ -43,6 +43,16 @@ func (a *app) _startup_rsa() error {
 func (a *app) _startup_jwt() error {
 	l := a.l
 	if a.jwtPrivKeyPath != "" && a.jwtPubKeyPath != "" {
+
+		if !fileExists(a.jwtPrivKeyPath) {
+			l.Info("[Startup JWT] JWT private key does not exist", zap.String("path", a.jwtPrivKeyPath))
+			return nil
+		}
+
+		if !fileExists(a.jwtPubKeyPath) {
+			l.Info("[Startup JWT] JWT public key does not exist", zap.String("path", a.jwtPubKeyPath))
+			return nil
+		}
 		l.Debug("[Startup JWT] initializing JWT keys with paths",
 			zap.String("jwt_private_key_path", a.jwtPrivKeyPath),
 			zap.String("jwt_pub_key_path", a.jwtPubKeyPath),
