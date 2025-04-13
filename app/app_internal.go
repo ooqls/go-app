@@ -32,6 +32,8 @@ func (a *app) _startup_rsa() error {
 		if err := keys.InitRSA(privKey, pubKey); err != nil {
 			return err
 		}
+
+		a.state.RSAInitialized = true
 		l.Debug("[Startup RSA] RSA keys initialized successfully")
 	} else {
 		l.Debug("[Startup RSA] no RSA key paths provided")
@@ -61,8 +63,9 @@ func (a *app) _startup_jwt() error {
 		jwtPubKey := mustReadFile(a.jwtPubKeyPath)
 		if err := keys.InitJwt(jwtPrivKey, jwtPubKey); err != nil {
 			return err
-		}
+		}	
 
+		a.state.JWTInitialized = true
 		l.Debug("[Startup JWT] JWT keys initialized successfully")
 	} else {
 		l.Debug("[Startup JWT] no JWT key paths provided")
@@ -85,6 +88,7 @@ func (a *app) _startup_registry() error {
 			l.Error("[Startup Registry] failed to initialize registry", zap.Error(err))
 			return err
 		}
+		a.state.RegistryInitialized = true
 		l.Debug("[Startup Registry] registry initialized successfully")
 
 	} else {
@@ -98,20 +102,29 @@ func (a *app) _startup_registry() error {
 func (a *app) _startup_sql() error {
 	l := a.l
 	if len(a.SQLFiles) > 0 {
+		if !a.state.RegistryInitialized {
+			l.Info("[Startup SQL] Please intialize registry before starting SQL")
+			return nil
+		}
+
 		l.Debug("[Startup SQL] initializing SQL files", zap.Strings("sql_files", a.SQLFiles))
 		err := gosqlx.InitDefault()
 		if err != nil {
 			l.Error("[Startup SQL] failed to initialize SQL files", zap.Error(err))
 			return err
 		}
+		a.state.SQLInitialized = true
 
 		c := gosqlx.GetSQLX()
+		sqlSeeded := len(a.SQLFiles) > 0
 		for _, file := range a.SQLFiles {
 			l.Debug("[Startup SQL] Loading sql file: " + file)
 			if _, err := sqlx.LoadFile(c, file); err != nil {
 				l.Error("[Startup SQL] failed to load file: "+file, zap.Error(err))
+				sqlSeeded = false
 			}
 		}
+		a.state.SQLSeeded = sqlSeeded
 		l.Debug("[Startup SQL] SQL files initialized successfully")
 	}
 
@@ -127,8 +140,14 @@ func (a *app) _startup_sql() error {
 	}
 
 	if len(indexStmts) > 0 || len(tableStmts) > 0 {
+		if !a.state.RegistryInitialized {
+			l.Info("[Startup SQL] please initialize the registry before seeding SQL")
+			return nil
+		}
+		
 		l.Debug("[Startup SQL] seeding with SQL statements")
 		gosqlx.SeedSQLX(tableStmts, indexStmts)
+		a.state.SQLSeeded = true
 		l.Debug("[Startup SQL] finished seeding with SQL statements")
 	} else {
 		l.Debug("[Startup SQL] no SQL statmenets")
@@ -172,6 +191,13 @@ func (a *app) _startup() error {
 	l.Debug("[Startup] dding logging routes")
 	v1.AddRoutes(a.e)
 	l.Debug("[Startup] finished adding logging routes")
+
+	l.Info("[Startup] App state", zap.Dict("state", 
+		zap.Bool("RSAInitialized", a.state.RSAInitialized),
+		zap.Bool("JWTInitialized", a.state.JWTInitialized),
+		zap.Bool("SQLInitialized", a.state.SQLInitialized),
+		zap.Bool("SQLSeeded", a.state.SQLSeeded),
+		zap.Bool("RegistryInitialized", a.state.RegistryInitialized)))
 	if a.startup != nil {
 		l.Debug("[Startup] running startup function")
 		err := a.startup(a.e)

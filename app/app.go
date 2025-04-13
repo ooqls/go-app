@@ -10,15 +10,15 @@ import (
 
 func New(appName string) *app {
 	return &app{
-		appName: appName,
-		registryPath: registryPath,
+		appName:        appName,
+		registryPath:   registryPath,
 		rsaPrivKeyPath: RsaPrivKeyPath,
-		rsaPubKeyPath: RsaPubKeyPath,
+		rsaPubKeyPath:  RsaPubKeyPath,
 		jwtPrivKeyPath: JwtPrivKeyPath,
-		jwtPubKeyPath: JwtPubKeyPath,
-		SQLFiles: strings.Split(sqlFiles, ","),
-		e: gin.New(),
-		l: log.NewLogger(appName),
+		jwtPubKeyPath:  JwtPubKeyPath,
+		SQLFiles:       strings.Split(sqlFiles, ","),
+		e:              gin.New(),
+		l:              log.NewLogger(appName),
 	}
 }
 
@@ -36,7 +36,8 @@ type app struct {
 	startup        func(c *gin.Engine) error
 	onPanic        func(err interface{})
 	e              *gin.Engine
-	l *zap.Logger
+	l              *zap.Logger
+	state          AppState
 }
 
 func (a *app) WithRegistryPath(path string) *app {
