@@ -16,23 +16,26 @@ func (a *app) _startup_rsa(ctx *StartupContext) error {
 		e.Message = fmt.Sprintf("[Startup RSA] %s", e.Message)
 		return nil
 	}))
+	
+	privKeyPath := a.features.RSA.PrivateKeyPath
+	pubKeyPath := a.features.RSA.PublicKeyPath
 
-	if a.rsaPrivKeyPath != "" && a.rsaPubKeyPath != "" {
+	if privKeyPath != "" && pubKeyPath != "" {
 		l.Debug("initializing RSA keys with paths",
-			zap.String("rsa_private_key_path", a.rsaPrivKeyPath),
-			zap.String("rsa_pub_key_path", a.rsaPubKeyPath),
+			zap.String("rsa_private_key_path", privKeyPath),
+			zap.String("rsa_pub_key_path", pubKeyPath),
 		)
-		if !fileExists(a.rsaPrivKeyPath) {
-			l.Info("RSA private key not found", zap.String("path", a.rsaPrivKeyPath))
+		if !fileExists(privKeyPath) {
+			l.Info("RSA private key not found", zap.String("path", privKeyPath))
 			return nil
 		}
 
-		if !fileExists(a.rsaPubKeyPath) {
-			l.Info("RSA public key not found", zap.String("path", a.rsaPubKeyPath))
+		if !fileExists(pubKeyPath) {
+			l.Info("RSA public key not found", zap.String("path", pubKeyPath))
 			return nil
 		}
-		privKey := mustReadFile(a.rsaPrivKeyPath)
-		pubKey := mustReadFile(a.rsaPubKeyPath)
+		privKey := mustReadFile(privKeyPath)
+		pubKey := mustReadFile(pubKeyPath)
 
 		if err := keys.InitRSA(privKey, pubKey); err != nil {
 			return err
@@ -53,23 +56,26 @@ func (a *app) _startup_jwt(ctx *StartupContext) error {
 		return nil
 	}))
 
-	if a.jwtPrivKeyPath != "" && a.jwtPubKeyPath != "" {
+	privKeyPath := a.features.JWT.PrivateKeyPath
+	pubKeyPath := a.features.JWT.PubKeyPath
 
-		if !fileExists(a.jwtPrivKeyPath) {
-			l.Info("JWT private key does not exist", zap.String("path", a.jwtPrivKeyPath))
+	if privKeyPath != "" && pubKeyPath != "" {
+
+		if !fileExists(privKeyPath) {
+			l.Info("JWT private key does not exist", zap.String("path", privKeyPath))
 			return nil
 		}
 
-		if !fileExists(a.jwtPubKeyPath) {
-			l.Info("JWT public key does not exist", zap.String("path", a.jwtPubKeyPath))
+		if !fileExists(pubKeyPath) {
+			l.Info("JWT public key does not exist", zap.String("path", pubKeyPath))
 			return nil
 		}
 		l.Debug("initializing JWT keys with paths",
-			zap.String("jwt_private_key_path", a.jwtPrivKeyPath),
-			zap.String("jwt_pub_key_path", a.jwtPubKeyPath),
+			zap.String("jwt_private_key_path", privKeyPath),
+			zap.String("jwt_pub_key_path", pubKeyPath),
 		)
-		jwtPrivKey := mustReadFile(a.jwtPrivKeyPath)
-		jwtPubKey := mustReadFile(a.jwtPubKeyPath)
+		jwtPrivKey := mustReadFile(privKeyPath)
+		jwtPubKey := mustReadFile(pubKeyPath)
 		if err := keys.InitJwt(jwtPrivKey, jwtPubKey); err != nil {
 			return err
 		}
@@ -88,15 +94,15 @@ func (a *app) _startup_registry(ctx *StartupContext) error {
 		e.Message = fmt.Sprintf("[Startup Registry] %s", e.Message)
 		return nil
 	}))
-
-	if a.registryPath != "" {
-		if !fileExists(a.registryPath) {
-			l.Info("registry file not found", zap.String("registry_path", a.registryPath))
+	registryPath := a.features.Registry.registryPath
+	if registryPath != "" {
+		if !fileExists(registryPath) {
+			l.Info("registry file not found", zap.String("registry_path", registryPath))
 			return nil
 		}
 
-		l.Debug("initializing registry with path", zap.String("path", a.registryPath))
-		if err := registry.Init(a.registryPath); err != nil {
+		l.Debug("initializing registry with path", zap.String("path", registryPath))
+		if err := registry.Init(registryPath); err != nil {
 			l.Error("failed to initialize registry", zap.Error(err))
 			return err
 		}

@@ -12,18 +12,12 @@ func New(appName string, features Features) *app {
 	
 	return &app{
 		appName:        appName,
-		registryPath:   registryPath,
 		e:              gin.New(),
 		l:              log.NewLogger(appName),
 	}
 }
 
 type app struct {
-	registryPath   string
-	rsaPrivKeyPath string
-	rsaPubKeyPath  string
-	jwtPrivKeyPath string
-	jwtPubKeyPath  string
 	appName        string
 	preStartup     func()
 	startup        func(c *gin.Engine) error
@@ -33,23 +27,6 @@ type app struct {
 
 	state    AppState
 	features Features
-}
-
-func (a *app) WithRegistryPath(path string) *app {
-	a.registryPath = path
-	return a
-}
-
-func (a *app) WithRsaPath(privKeyPath, pubKeyPath string) *app {
-	a.rsaPrivKeyPath = privKeyPath
-	a.rsaPubKeyPath = pubKeyPath
-	return a
-}
-
-func (a *app) WithJwtPath(privKeyPath, pubKeyPath string) *app {
-	a.jwtPrivKeyPath = privKeyPath
-	a.jwtPubKeyPath = pubKeyPath
-	return a
 }
 
 func (a *app) OnPreStartup(f func()) *app {
