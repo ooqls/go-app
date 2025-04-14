@@ -8,9 +8,40 @@ type featureOpt struct {
 const (
 	optPrivateKeyPath string = "opt-private-key-path"
 	optPublicKeyPath string = "opt-public-key-path"
-
-	
+	optRegistryPath string = "opt-registry-path"
 )
+
+func WithRegistryPath(p string) featureOpt {
+	return featureOpt{
+		key: optRegistryPath,
+		value: p,
+	}
+}
+
+type RegistryFeature struct {
+	enabled bool
+	registryPath string
+}
+
+func (f *RegistryFeature) apply(opt featureOpt) {
+	switch opt.key {
+	case optRegistryPath:
+		f.registryPath = opt.value.(string)
+	}
+}
+
+func Registry(opts ...featureOpt) RegistryFeature {
+	f := RegistryFeature{
+		enabled: true,
+		registryPath: registryPath,
+	}
+
+	for _, opt := range opts {
+		f.apply(opt)
+	}
+
+	return f
+}
 
 func WithPrivateKeyPath(p string) featureOpt {
 	return featureOpt{
@@ -90,4 +121,5 @@ type Features struct {
 	RSA        RSAFeature
 	JWT        JWTFeature
 	SQL        SQLFeature
+	Registry RegistryFeature
 }
