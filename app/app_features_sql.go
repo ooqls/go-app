@@ -10,50 +10,54 @@ const (
 )
 
 const (
-	optCreateTableStatements string = "opt-create-table"
-	optCreateIndexStatements string = "opt-create-index"
-	optSqlFiles string = "opt-sql-files"
+	sql_createTableStatementsOpt string = "opt-create-table"
+	sql_createIndexStatementsOpt string = "opt-create-index"
+	sql_sqlFilesOpt string = "opt-sql-files"
 )
 
-func WithCreateTableStatements(stmts []string) featureOpt {
-	return featureOpt{
-		key: optCreateTableStatements,
+type sqlOpt = featureOpt
+
+func WithCreateTableStatements(stmts []string) sqlOpt {
+	return sqlOpt{
+		key: sql_createTableStatementsOpt,
 		value: stmts,
 	}
 }
 
-func WithCreateIndexStatements(stmts []string) featureOpt {
-	return featureOpt{
-		key: optCreateIndexStatements,
+func WithCreateIndexStatements(stmts []string) sqlOpt {
+	return sqlOpt{
+		key: sql_createIndexStatementsOpt,
 		value: stmts,
 	}
 }
 
-func WithSQLFiles(files []string) featureOpt {
-	return featureOpt{
-		key: optSqlFiles,
+func WithSQLFiles(files []string) sqlOpt {
+	return sqlOpt{
+		key: sql_sqlFilesOpt,
 		value: files,
 	}
 }
 
-func SQLXFeature(createTableStatements []string, createIndexStatements []string, sqlFiles []string) SQLFeature {
-	return SQLFeature{
-		Enabled:               true,
-		SQLFiles:              sqlFiles,
-		CreateTableStatements: createTableStatements,
-		CreateIndexStatements: createIndexStatements,
-		SQLPackage:            sqlxPackage,
-	}
+func SQLX(opts ...sqlOpt) SQLFeature {
+	return newSQLFeature(sqlxPackage, opts...)
 }
 
-func PGX(createTableStatements, createIndexStatements []string) SQLFeature {
-	return SQLFeature{
+func PGX(opts ...sqlOpt) SQLFeature {
+	return newSQLFeature(sqlxPackage, opts...)
+}
+
+func newSQLFeature(sp sqlPackage, opts ...sqlOpt) SQLFeature {
+	f := SQLFeature{
 		Enabled:               true,
-		CreateTableStatements: createTableStatements,
-		CreateIndexStatements: createIndexStatements,
-		SQLFiles:              strings.Split(sqlFiles, ","),
-		SQLPackage:            pgxPackage,
+		SQLFiles:              strings.Split(sqlFilesFlag, ","),
+		SQLPackage:            sp,
 	}
+
+	for _, opt := range opts {
+		f.apply(opt)
+	}
+
+	return f
 }
 
 type SQLFeature struct {
@@ -64,13 +68,13 @@ type SQLFeature struct {
 	SQLPackage            sqlPackage
 }
 
-func (f *SQLFeature) apply(opt featureOpt) {
+func (f *SQLFeature) apply(opt sqlOpt) {
 	switch opt.key {
-	case optCreateIndexStatements:
+	case sql_createIndexStatementsOpt:
 		f.CreateIndexStatements = opt.value.([]string)
-	case optCreateTableStatements:
+	case sql_createTableStatementsOpt:
 		f.CreateTableStatements = opt.value.([]string)
-	case optSqlFiles:
+	case sql_sqlFilesOpt:
 		f.SQLFiles = opt.value.([]string)
 	}
 }
