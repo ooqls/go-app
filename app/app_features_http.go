@@ -11,33 +11,43 @@ const (
 	http_clientPrivateKeyOpt  string = "opt-client-key-http-client"
 )
 
-type httpOpt = featureOpt
+type httpOpt struct {
+	featureOpt
+}
 
 func WithCertificates(certs []x509.Certificate) httpOpt {
 	return httpOpt{
-		key:   http_clientCertOpt,
-		value: certs,
+		featureOpt: featureOpt{
+			key:   http_clientCertOpt,
+			value: certs,
+		},
 	}
 }
 
 func WithCaPool(pool x509.CertPool) httpOpt {
 	return httpOpt{
-		key:   http_caClientOpt,
-		value: pool,
+		featureOpt: featureOpt{
+			key:   http_caClientOpt,
+			value: pool,
+		},
 	}
 }
 
 func WithClientCertificates(cert []x509.Certificate) httpOpt {
 	return httpOpt{
-		key:   http_clientCertOpt,
-		value: cert,
+		featureOpt: featureOpt{
+			key:   http_clientCertOpt,
+			value: cert,
+		},
 	}
 }
 
 func WithPrivateKey(key crypto.PrivateKey) httpOpt {
 	return httpOpt{
-		key: http_clientPrivateKeyOpt,
-		value: key,
+		featureOpt: featureOpt{
+			key: http_clientPrivateKeyOpt,
+			value: key,
+		},
 	}
 }
 

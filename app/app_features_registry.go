@@ -4,12 +4,15 @@ const (
 	registry_pathOpt string = "opt-registry-path"
 )
 
-type registryOpt = featureOpt
+type registryOpt struct {
+	featureOpt
+}
 
 func WithRegistryPath(p string) registryOpt {
-	return registryOpt{
-		key: registry_pathOpt,
-		value: &p,
+	return registryOpt{featureOpt: featureOpt{
+			key: registry_pathOpt,
+			value: &p,
+		},
 	}
 }
 

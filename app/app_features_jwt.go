@@ -2,24 +2,30 @@ package app
 
 import "github.com/ooqls/go-crypto/jwt"
 
-type jwtOpt = featureOpt
+type jwtOpt struct {
+	featureOpt
+}
 
 const (
 	jwt_tokenConfigurationPathOpt string = "jwt_tokenConfigurationPath"
 	jwt_tokenConfigurationOpt     string = "jwt_tokenConfiguration"
 )
 
-func WithTokenConfigurationPath(p string) featureOpt {
-	return featureOpt{
-		key: jwt_tokenConfigurationPathOpt,
-		value: p,
+func WithTokenConfigurationPath(p string) jwtOpt {
+	return jwtOpt{
+		featureOpt: featureOpt{
+			key: jwt_tokenConfigurationPathOpt,
+			value: p,
+		},
 	}
 }
 
-func WithTokenConfiguration(cfg jwt.TokenConfiguration) featureOpt {
-	return featureOpt{
-		key: jwt_tokenConfigurationOpt,
-		value: &cfg,
+func WithTokenConfiguration(cfg jwt.TokenConfiguration) jwtOpt {
+	return jwtOpt{
+		featureOpt: featureOpt{
+			key: jwt_tokenConfigurationOpt,
+			value: &cfg,
+		},
 	}
 }
 

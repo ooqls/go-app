@@ -9,61 +9,79 @@ const (
 	tls_keyBytes    string = "opt-server-key-bytes"
 )
 
-type tlsOpt = featureOpt
+type tlsOpt struct {
+	featureOpt
+}
 
 func WithServerCAFile(ca string) tlsOpt {
 	return tlsOpt{
-		key:   tls_caFileOpt,
-		value: ca,
+		featureOpt: featureOpt{
+			key:   tls_caFileOpt,
+			value: ca,
+		},
 	}
 }
 
 func WithServerCert(cert string) tlsOpt {
 	return tlsOpt{
-		key:   tls_crtOpt,
-		value: cert,
+		featureOpt: featureOpt{
+			key:   tls_crtOpt,
+			value: cert,
+		},
 	}
 }
 
 func WithServerCertBytes(cert []byte) tlsOpt {
 	return tlsOpt{
-		key:   tls_crtBytesOpt,
-		value: cert,
+		featureOpt: featureOpt{
+			key:   tls_crtBytesOpt,
+			value: cert,
+		},
 	}
 }
 
 func WithServerKey(keyPath string) tlsOpt {
 	return tlsOpt{
-		key: tls_keyFile,
-		value: keyPath,
+		featureOpt: featureOpt{
+			key:   tls_keyFile,
+			value: keyPath,
+		},
 	}
 }
 
 func WithServerKeyBytes(b []byte) tlsOpt {
 	return tlsOpt{
-		key: tls_keyBytes,
-		value: b,
+		featureOpt: featureOpt{
+			key:   tls_keyBytes,
+			value: b,
+		},
 	}
 }
 
 func WithCaBytes(ca []byte) tlsOpt {
 	return tlsOpt{
-		key:   tls_caBytesOpt,
-		value: ca,
+		featureOpt: featureOpt{
+			key:   tls_caBytesOpt,
+			value: ca,
+		},
 	}
 }
 
 func WithKeyFile(p string) tlsOpt {
 	return tlsOpt{
-		key:   tls_keyFile,
-		value: p,
+		featureOpt: featureOpt{
+			key:   tls_keyFile,
+			value: p,
+		},
 	}
 }
 
 func WithKeyBytes(b []byte) tlsOpt {
 	return tlsOpt{
-		key:   tls_keyBytes,
-		value: b,
+		featureOpt: featureOpt{
+			key:   tls_keyBytes,
+			value: b,
+		},
 	}
 }
 

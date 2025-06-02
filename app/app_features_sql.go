@@ -15,26 +15,34 @@ const (
 	sql_sqlFilesOpt string = "opt-sql-files"
 )
 
-type sqlOpt = featureOpt
+type sqlOpt struct {
+	featureOpt
+}
 
 func WithCreateTableStatements(stmts []string) sqlOpt {
 	return sqlOpt{
-		key: sql_createTableStatementsOpt,
-		value: stmts,
+		featureOpt: featureOpt{
+			key: sql_createTableStatementsOpt,
+			value: stmts,
+		},
 	}
 }
 
 func WithCreateIndexStatements(stmts []string) sqlOpt {
 	return sqlOpt{
-		key: sql_createIndexStatementsOpt,
-		value: stmts,
+		featureOpt: featureOpt{
+			key: sql_createIndexStatementsOpt,
+			value: stmts,
+		},
 	}
 }
 
 func WithSQLFiles(files []string) sqlOpt {
 	return sqlOpt{
-		key: sql_sqlFilesOpt,
-		value: files,
+		featureOpt: featureOpt{
+			key: sql_sqlFilesOpt,
+			value: files,
+		},
 	}
 }
 

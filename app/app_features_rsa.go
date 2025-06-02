@@ -5,12 +5,16 @@ const (
 	rsa_publicKeyPathOpt  string = "opt-public-key-path"
 )
 
-type rsaOpt = featureOpt
+type rsaOpt struct {
+	featureOpt
+}
 
 func WithPrivateKeyPath(p string) rsaOpt {
 	return rsaOpt{
-		key:   rsa_privateKeyPathOpt,
-		value: p,
+		featureOpt: featureOpt{
+			key:   rsa_privateKeyPathOpt,
+			value: p,
+		},
 	}
 }
 func RSA(opts ...rsaOpt) RSAFeature {
