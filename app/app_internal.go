@@ -19,8 +19,8 @@ import (
 func (a *app) _startup_docs(ctx *StartupContext) error {
 	l := ctx.L()
 	l.Info("[Startup docs] Serving htnl docs",
-		zap.String("path", a.features.Docs.DocsPath), zap.String("api_path", a.features.Docs.docsApiPath))
-	a.e.GET(a.features.Docs.docsApiPath, func(ctx *gin.Context) {
+		zap.String("path", a.features.Docs.DocsPath), zap.String("api_path", a.features.Docs.DocsApiPath))
+	a.e.GET(a.features.Docs.DocsApiPath, func(ctx *gin.Context) {
 		ctx.File(a.features.Docs.DocsPath)
 	})
 

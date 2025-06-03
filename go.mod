@@ -17,6 +17,7 @@ require (
 	github.com/ooqls/go-registry v0.1.6
 	github.com/testcontainers/testcontainers-go v0.35.0
 	go.uber.org/zap v1.27.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

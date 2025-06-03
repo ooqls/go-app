@@ -57,6 +57,7 @@ func (a *app) WithTestEnvironment(env TestEnvironment) {
 	a.testEnvironment = &env
 }
 
+
 func (a *app) OnPreStartup(f func()) *app {
 	a.preStartup = f
 	return a
