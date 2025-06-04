@@ -10,11 +10,17 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	AuthIssuer = "auth"
+	RefreshIssuer = "refresh"
+)
+
 func NewStartupContext(ctx context.Context, l *zap.Logger, e *gin.Engine) *StartupContext {
 	return &StartupContext{
 		l:       l,
 		Context: ctx,
 		e:       e,
+		issuerToTokenConfigs: make(map[string]jwt.TokenConfiguration),
 	}
 }
 
@@ -24,7 +30,7 @@ type StartupContext struct {
 	httpClient *http.Client
 	tlsConfig  *tls.Config
 	e          *gin.Engine
-	tokenConfig *jwt.TokenConfiguration
+	issuerToTokenConfigs map[string]jwt.TokenConfiguration
 }
 
 func (ctx *StartupContext) L() *zap.Logger {
@@ -47,6 +53,12 @@ func (ctx *StartupContext) Gin() (*gin.Engine, bool) {
 	return ctx.e, ctx.e != nil
 }
 
-func (ctx *StartupContext) IssuerConfig() (*jwt.TokenConfiguration, bool) {
-	return ctx.tokenConfig, ctx.tokenConfig != nil
+func (ctx *StartupContext) AuthIssuerConfig() (*jwt.TokenConfiguration, bool) {
+	config, ok := ctx.issuerToTokenConfigs[AuthIssuer]
+	return &config, ok
+}
+
+func (ctx *StartupContext) RefreshIssuerConfig() (*jwt.TokenConfiguration, bool) {
+	config, ok := ctx.issuerToTokenConfigs[RefreshIssuer]
+	return &config, ok
 }

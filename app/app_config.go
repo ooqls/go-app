@@ -28,7 +28,7 @@ type JWTConfig struct {
 	Enabled                bool   `yaml:"enabled"`
 	RSAKeyPath             string `yaml:"rsa_key_path"`
 	RSAPubKeyPath          string `yaml:"rsa_pub_key_path"`
-	TokenConfigurationPath string `yaml:"token_configuration_path"`
+	TokenConfigurationPaths []string `yaml:"token_configuration_paths"`
 }
 
 type SQLFilesConfig struct {

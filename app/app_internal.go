@@ -171,7 +171,7 @@ func (a *app) _startup_rsa(ctx *StartupContext) error {
 func (a *app) _startup_jwt(ctx *StartupContext) error {
 	l := ctx.L()
 
-	configPath := a.features.JWT.tokenConfigurationPath
+	configPaths := a.features.JWT.tokenConfigurationPaths
 	privKeyPath := a.features.JWT.PrivateKeyPath
 	pubKeyPath := a.features.JWT.PubKeyPath
 
@@ -208,13 +208,17 @@ func (a *app) _startup_jwt(ctx *StartupContext) error {
 		keys.SetJwt(jwtKey)
 	}
 
-	if configPath != "" {
-		config, err := jwt.ParseTokenConfigFile(configPath)
-		if err != nil {
-			return fmt.Errorf("failed to parse token config file: %v", err)
+	for _, configPath := range configPaths {
+		if !fileExists(configPath) {
+			l.Error("[Startup JWT] JWT token config file not found", zap.String("path", configPath))
+			return fmt.Errorf("JWT token config file not found: %s", configPath)
 		}
 
-		ctx.tokenConfig = config
+		config, err := jwt.ParseTokenConfigFile(configPath)
+		if err != nil {
+			return fmt.Errorf("failed to parse token config file %s: %v", configPath, err)
+		}
+		ctx.issuerToTokenConfigs[config.Issuer] = *config
 	}
 
 	return nil

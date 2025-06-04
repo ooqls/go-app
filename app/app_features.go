@@ -33,7 +33,7 @@ func WithConfig(cfg *AppConfig) Features {
 		},
 		JWT: JWTFeature{
 			Enabled:                cfg.JWT.Enabled,
-			tokenConfigurationPath: cfg.JWT.TokenConfigurationPath,
+			tokenConfigurationPaths: cfg.JWT.TokenConfigurationPaths,
 			PrivateKeyPath:         cfg.JWT.RSAKeyPath,
 			PubKeyPath:             cfg.JWT.RSAPubKeyPath,
 		},

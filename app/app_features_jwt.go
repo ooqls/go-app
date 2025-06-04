@@ -47,8 +47,8 @@ type JWTFeature struct {
 	Enabled                bool
 	PrivateKeyPath         string
 	PubKeyPath             string
-	tokenConfigurationPath string
-	tokenConfiguration     *jwt.TokenConfiguration
+	tokenConfigurationPaths []string
+	tokenConfiguration     []jwt.TokenConfiguration
 }
 
 func (f *JWTFeature) apply(opt jwtOpt) {
@@ -58,8 +58,8 @@ func (f *JWTFeature) apply(opt jwtOpt) {
 	case rsa_publicKeyPathOpt:
 		f.PubKeyPath = opt.value.(string)
 	case jwt_tokenConfigurationPathOpt:
-		f.tokenConfigurationPath = opt.value.(string)
+		f.tokenConfigurationPaths = opt.value.([]string)
 	case jwt_tokenConfigurationOpt:
-		f.tokenConfiguration = opt.value.(*jwt.TokenConfiguration)
+		f.tokenConfiguration = opt.value.([]jwt.TokenConfiguration)
 	}
 }
