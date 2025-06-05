@@ -11,25 +11,25 @@ import (
 )
 
 const (
-	AuthIssuer = "auth"
+	AuthIssuer    = "auth"
 	RefreshIssuer = "refresh"
 )
 
 func NewStartupContext(ctx context.Context, l *zap.Logger, e *gin.Engine) *StartupContext {
 	return &StartupContext{
-		l:       l,
-		Context: ctx,
-		e:       e,
+		l:                    l,
+		Context:              ctx,
+		e:                    e,
 		issuerToTokenConfigs: make(map[string]jwt.TokenConfiguration),
 	}
 }
 
 type StartupContext struct {
 	context.Context
-	l          *zap.Logger
-	httpClient *http.Client
-	tlsConfig  *tls.Config
-	e          *gin.Engine
+	l                    *zap.Logger
+	httpClient           *http.Client
+	tlsConfig            *tls.Config
+	e                    *gin.Engine
 	issuerToTokenConfigs map[string]jwt.TokenConfiguration
 }
 

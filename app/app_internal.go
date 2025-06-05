@@ -171,6 +171,7 @@ func (a *app) _startup_rsa(ctx *StartupContext) error {
 func (a *app) _startup_jwt(ctx *StartupContext) error {
 	l := ctx.L()
 
+	configs := a.features.JWT.tokenConfiguration
 	configPaths := a.features.JWT.tokenConfigurationPaths
 	privKeyPath := a.features.JWT.PrivateKeyPath
 	pubKeyPath := a.features.JWT.PubKeyPath
@@ -219,6 +220,10 @@ func (a *app) _startup_jwt(ctx *StartupContext) error {
 			return fmt.Errorf("failed to parse token config file %s: %v", configPath, err)
 		}
 		ctx.issuerToTokenConfigs[config.Issuer] = *config
+	}
+
+	for _, cfg := range configs {
+		ctx.issuerToTokenConfigs[cfg.Issuer] = cfg
 	}
 
 	return nil
