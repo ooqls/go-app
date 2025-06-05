@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 
+	"github.com/ooqls/go-crypto/jwt"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,10 +26,11 @@ type TLSConfig struct {
 }
 
 type JWTConfig struct {
-	Enabled                bool   `yaml:"enabled"`
-	RSAKeyPath             string `yaml:"rsa_key_path"`
-	RSAPubKeyPath          string `yaml:"rsa_pub_key_path"`
-	TokenConfigurationPaths []string `yaml:"token_configuration_paths"`
+	Enabled                 bool                     `yaml:"enabled"`
+	RSAKeyPath              string                   `yaml:"rsa_key_path"`
+	RSAPubKeyPath           string                   `yaml:"rsa_pub_key_path"`
+	TokenConfigurationPaths []string                 `yaml:"token_configuration_paths"`
+	TokenConfigurations     []jwt.TokenConfiguration `yaml:"token_configurations"`
 }
 
 type SQLFilesConfig struct {

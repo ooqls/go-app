@@ -32,10 +32,11 @@ func WithConfig(cfg *AppConfig) Features {
 			CAFile:         cfg.TLS.CaPath,
 		},
 		JWT: JWTFeature{
-			Enabled:                cfg.JWT.Enabled,
+			Enabled:                 cfg.JWT.Enabled,
 			tokenConfigurationPaths: cfg.JWT.TokenConfigurationPaths,
-			PrivateKeyPath:         cfg.JWT.RSAKeyPath,
-			PubKeyPath:             cfg.JWT.RSAPubKeyPath,
+			PrivateKeyPath:          cfg.JWT.RSAKeyPath,
+			PubKeyPath:              cfg.JWT.RSAPubKeyPath,
+			tokenConfiguration:      cfg.JWT.TokenConfigurations,
 		},
 		SQL: SQLFeature{
 			Enabled:               cfg.SQLFiles.Enabled,
@@ -44,8 +45,8 @@ func WithConfig(cfg *AppConfig) Features {
 			CreateIndexStatements: cfg.SQLFiles.CreateIndexStmts,
 		},
 		Registry: RegistryFeature{
-			enabled: cfg.Registry.Enabled,
-			registryPath:    &cfg.Registry.Path,
+			enabled:      cfg.Registry.Enabled,
+			registryPath: &cfg.Registry.Path,
 		},
 	}
 }
