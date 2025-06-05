@@ -64,7 +64,7 @@ func (a *app) _startup_sql(ctx *StartupContext) error {
 
 		l.Debug("[Startup SQL] initializing SQL files", zap.Strings("sql_files", sqlFiles))
 
-		if a.features.SQL.SQLPackage == sqlxPackage {
+		if a.features.SQL.SQLPackage == SQLXPackage {
 			err := gosqlx.InitDefault()
 			if err != nil {
 				l.Error("[Startup SQL] failed to initialize SQLX", zap.Error(err))
@@ -72,7 +72,7 @@ func (a *app) _startup_sql(ctx *StartupContext) error {
 			}
 
 			a.state.SQLSeeded = a._seed_sqlx_files(ctx, sqlFiles)
-		} else if a.features.SQL.SQLPackage == pgxPackage {
+		} else if a.features.SQL.SQLPackage == PGXPackage {
 			err := pgx.InitDefault()
 			if err != nil {
 				l.Error("[Startup SQL] failed to initialize PGX", zap.Error(err))
@@ -97,9 +97,9 @@ func (a *app) _startup_sql(ctx *StartupContext) error {
 
 	if len(indexStmts) > 0 || len(tableStmts) > 0 {
 		l.Debug("[Startup SQL] seeding with SQL statements")
-		if a.features.SQL.SQLPackage == sqlxPackage {
+		if a.features.SQL.SQLPackage == SQLXPackage {
 			gosqlx.SeedSQLX(tableStmts, indexStmts)
-		} else if a.features.SQL.SQLPackage == pgxPackage {
+		} else if a.features.SQL.SQLPackage == PGXPackage {
 			pgx.SeedPGX(ctx, tableStmts, indexStmts)
 		}
 

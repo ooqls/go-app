@@ -5,8 +5,8 @@ import "strings"
 type sqlPackage string
 
 const (
-	pgxPackage  sqlPackage = "PGX"
-	sqlxPackage sqlPackage = "SQLX"
+	PGXPackage  sqlPackage = "PGX"
+	SQLXPackage sqlPackage = "SQLX"
 )
 
 const (
@@ -57,11 +57,11 @@ func WithSQLDirs(dirs []string) sqlOpt {
 }
 
 func SQLX(opts ...sqlOpt) SQLFeature {
-	return newSQLFeature(sqlxPackage, opts...)
+	return newSQLFeature(SQLXPackage, opts...)
 }
 
 func PGX(opts ...sqlOpt) SQLFeature {
-	return newSQLFeature(sqlxPackage, opts...)
+	return newSQLFeature(SQLXPackage, opts...)
 }
 
 func newSQLFeature(sp sqlPackage, opts ...sqlOpt) SQLFeature {
@@ -83,7 +83,7 @@ type SQLFeature struct {
 	CreateTableStatements []string
 	CreateIndexStatements []string
 	SQLFiles              []string
-	SQLDirs                []string
+	SQLDirs               []string
 	SQLPackage            sqlPackage
 }
 
