@@ -12,7 +12,8 @@ const (
 const (
 	sql_createTableStatementsOpt string = "opt-create-table"
 	sql_createIndexStatementsOpt string = "opt-create-index"
-	sql_sqlFilesOpt string = "opt-sql-files"
+	sql_DirsOpt                  string = "opt-sql-dirs"
+	sql_sqlFilesOpt              string = "opt-sql-files"
 )
 
 type sqlOpt struct {
@@ -22,7 +23,7 @@ type sqlOpt struct {
 func WithCreateTableStatements(stmts []string) sqlOpt {
 	return sqlOpt{
 		featureOpt: featureOpt{
-			key: sql_createTableStatementsOpt,
+			key:   sql_createTableStatementsOpt,
 			value: stmts,
 		},
 	}
@@ -31,7 +32,7 @@ func WithCreateTableStatements(stmts []string) sqlOpt {
 func WithCreateIndexStatements(stmts []string) sqlOpt {
 	return sqlOpt{
 		featureOpt: featureOpt{
-			key: sql_createIndexStatementsOpt,
+			key:   sql_createIndexStatementsOpt,
 			value: stmts,
 		},
 	}
@@ -40,8 +41,17 @@ func WithCreateIndexStatements(stmts []string) sqlOpt {
 func WithSQLFiles(files []string) sqlOpt {
 	return sqlOpt{
 		featureOpt: featureOpt{
-			key: sql_sqlFilesOpt,
+			key:   sql_sqlFilesOpt,
 			value: files,
+		},
+	}
+}
+
+func WithSQLDirs(dirs []string) sqlOpt {
+	return sqlOpt{
+		featureOpt: featureOpt{
+			key:   sql_DirsOpt,
+			value: dirs,
 		},
 	}
 }
@@ -56,9 +66,9 @@ func PGX(opts ...sqlOpt) SQLFeature {
 
 func newSQLFeature(sp sqlPackage, opts ...sqlOpt) SQLFeature {
 	f := SQLFeature{
-		Enabled:               true,
-		SQLFiles:              strings.Split(sqlFilesFlag, ","),
-		SQLPackage:            sp,
+		Enabled:    true,
+		SQLFiles:   strings.Split(sqlFilesFlag, ","),
+		SQLPackage: sp,
 	}
 
 	for _, opt := range opts {
@@ -73,6 +83,7 @@ type SQLFeature struct {
 	CreateTableStatements []string
 	CreateIndexStatements []string
 	SQLFiles              []string
+	SQLDirs                []string
 	SQLPackage            sqlPackage
 }
 
@@ -84,5 +95,7 @@ func (f *SQLFeature) apply(opt sqlOpt) {
 		f.CreateTableStatements = opt.value.([]string)
 	case sql_sqlFilesOpt:
 		f.SQLFiles = opt.value.([]string)
+	case sql_DirsOpt:
+		f.SQLDirs = opt.value.([]string)
 	}
 }

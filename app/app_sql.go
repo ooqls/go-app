@@ -1,17 +1,20 @@
 package app
 
 import (
+	"path"
+	"path/filepath"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/ooqls/go-db/pgx"
 	gosqlx "github.com/ooqls/go-db/sqlx"
 	"go.uber.org/zap"
 )
 
-func (a *app) _seed_pgx_files(ctx *StartupContext) bool {
+func (a *app) _seed_pgx_files(ctx *StartupContext, files []string) bool {
 	l := ctx.L()
-	sqlSeeded := len(a.features.SQL.SQLFiles) > 0
+	sqlSeeded := len(files) > 0
 
-	for _, file := range a.features.SQL.SQLFiles {
+	for _, file := range files {
 		l.Debug("[Startup SQL] loading SQL file: " + file)
 		if err := pgx.SeedPGXFile(ctx, file); err != nil {
 			l.Error("failed to load file: "+file, zap.Error(err))
@@ -22,11 +25,11 @@ func (a *app) _seed_pgx_files(ctx *StartupContext) bool {
 	return sqlSeeded
 }
 
-func (a *app) _seed_sqlx_files(ctx *StartupContext) bool {
+func (a *app) _seed_sqlx_files(ctx *StartupContext, files []string) bool {
 	l := ctx.L()
 	c := gosqlx.GetSQLX()
-	sqlSeeded := len(a.features.SQL.SQLFiles) > 0
-	for _, file := range a.features.SQL.SQLFiles {
+	sqlSeeded := len(files) > 0
+	for _, file := range files {
 		l.Debug("[Startup SQL] Loading sql file: " + file)
 		if _, err := sqlx.LoadFile(c, file); err != nil {
 			l.Error("[Startup SQL] failed to load file: "+file, zap.Error(err))
@@ -39,9 +42,27 @@ func (a *app) _seed_sqlx_files(ctx *StartupContext) bool {
 
 func (a *app) _startup_sql(ctx *StartupContext) error {
 	l := ctx.L()
+	sqlFiles := []string{}
 
 	if len(a.features.SQL.SQLFiles) > 0 {
-		l.Debug("[Startup SQL] initializing SQL files", zap.Strings("sql_files", a.features.SQL.SQLFiles))
+		sqlFiles = append(sqlFiles, a.features.SQL.SQLFiles...)
+	}
+
+	if len(a.features.SQL.SQLDirs) > 0 {
+		for _, dir := range a.features.SQL.SQLDirs {
+			sqlDir := path.Join(dir, "*.sql")
+			files, err := filepath.Glob(sqlDir)
+			if err != nil {
+				l.Error("[Startup SQL] failed to glob SQL directory", zap.String("dir", sqlDir), zap.Error(err))
+				continue
+			}
+			sqlFiles = append(sqlFiles, files...)
+		}
+	}
+
+	if len(sqlFiles) > 0 {
+
+		l.Debug("[Startup SQL] initializing SQL files", zap.Strings("sql_files", sqlFiles))
 
 		if a.features.SQL.SQLPackage == sqlxPackage {
 			err := gosqlx.InitDefault()
@@ -50,7 +71,7 @@ func (a *app) _startup_sql(ctx *StartupContext) error {
 				return err
 			}
 
-			a.state.SQLSeeded = a._seed_sqlx_files(ctx)
+			a.state.SQLSeeded = a._seed_sqlx_files(ctx, sqlFiles)
 		} else if a.features.SQL.SQLPackage == pgxPackage {
 			err := pgx.InitDefault()
 			if err != nil {
@@ -58,7 +79,7 @@ func (a *app) _startup_sql(ctx *StartupContext) error {
 				return err
 			}
 
-			a.state.SQLSeeded = a._seed_pgx_files(ctx)
+			a.state.SQLSeeded = a._seed_pgx_files(ctx, sqlFiles)
 		}
 		l.Debug("[Startup SQL] SQL files initialized successfully")
 	}
