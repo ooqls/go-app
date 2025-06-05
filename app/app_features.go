@@ -40,7 +40,9 @@ func WithConfig(cfg *AppConfig) Features {
 		},
 		SQL: SQLFeature{
 			Enabled:               cfg.SQLFiles.Enabled,
+			SQLPackage:            cfg.SQLFiles.SQLPackage,
 			SQLFiles:              cfg.SQLFiles.SQLFiles,
+			SQLDirs:               cfg.SQLFiles.SQLFilesDirs,
 			CreateTableStatements: cfg.SQLFiles.CreateTableStmts,
 			CreateIndexStatements: cfg.SQLFiles.CreateIndexStmts,
 		},

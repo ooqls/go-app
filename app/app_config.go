@@ -34,11 +34,12 @@ type JWTConfig struct {
 }
 
 type SQLFilesConfig struct {
-	Enabled          bool     `yaml:"enabled"`
-	SQLFilesDir      string   `yaml:"sql_files_dir"`
-	SQLFiles         []string `yaml:"sql_files"`
-	CreateTableStmts []string `yaml:"create_table_stmts"`
-	CreateIndexStmts []string `yaml:"create_index_stmts"`
+	Enabled          bool       `yaml:"enabled"`
+	SQLPackage       sqlPackage `yaml:"sql_package"`
+	SQLFilesDirs     []string   `yaml:"sql_files_dirs"`
+	SQLFiles         []string   `yaml:"sql_files"`
+	CreateTableStmts []string   `yaml:"create_table_stmts"`
+	CreateIndexStmts []string   `yaml:"create_index_stmts"`
 }
 
 type RegistryConfig struct {

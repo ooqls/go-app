@@ -105,7 +105,7 @@ func (a *app) _startup_sql(ctx *StartupContext) error {
 
 		l.Debug("[Startup SQL] finished seeding with SQL statements")
 	} else {
-		l.Debug("[Startup SQL] no SQL statmenets")
+		l.Debug("[Startup SQL] no SQL statements")
 	}
 
 	return nil
