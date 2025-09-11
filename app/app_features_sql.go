@@ -4,11 +4,17 @@ import "strings"
 
 type sqlPackage string
 
+
+// flags
+var sqlFilesFlag string
+
+// sql packages
 const (
 	PGXPackage  sqlPackage = "PGX"
 	SQLXPackage sqlPackage = "SQLX"
 )
 
+// sql options
 const (
 	sql_createTableStatementsOpt string = "opt-create-table"
 	sql_createIndexStatementsOpt string = "opt-create-index"
@@ -88,14 +94,14 @@ type SQLFeature struct {
 }
 
 func (f *SQLFeature) apply(opt sqlOpt) {
-	switch opt.key {
+	switch opt.featureOpt.key {
 	case sql_createIndexStatementsOpt:
-		f.CreateIndexStatements = opt.value.([]string)
+		f.CreateIndexStatements = opt.featureOpt.value.([]string)
 	case sql_createTableStatementsOpt:
-		f.CreateTableStatements = opt.value.([]string)
+		f.CreateTableStatements = opt.featureOpt.value.([]string)
 	case sql_sqlFilesOpt:
-		f.SQLFiles = opt.value.([]string)
+		f.SQLFiles = opt.featureOpt.value.([]string)
 	case sql_DirsOpt:
-		f.SQLDirs = opt.value.([]string)
+		f.SQLDirs = opt.featureOpt.value.([]string)
 	}
 }

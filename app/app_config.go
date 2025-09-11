@@ -49,16 +49,30 @@ type RegistryConfig struct {
 
 type LoggingAPIConfig struct {
 	Enabled bool `yaml:"enabled"`
+	Port    int  `yaml:"port"`
+}
+
+type HealthConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	Path     string `yaml:"path"`
+	Interval int    `yaml:"interval"`
+}
+
+type GinConfig struct {
+	Enabled bool `yaml:"enabled"`
+	Port    int  `yaml:"port"`
 }
 
 type AppConfig struct {
 	LoggingAPI   LoggingAPIConfig `yaml:"logging_api"`
+	Gin          GinConfig        `yaml:"gin"`
 	DocsConfig   DocsConfig       `yaml:"docs"`
 	ServerConfig ServerConfig     `yaml:"server"`
 	TLS          TLSConfig        `yaml:"tls"`
 	JWT          JWTConfig        `yaml:"jwt"`
 	SQLFiles     SQLFilesConfig   `yaml:"sql"`
 	Registry     RegistryConfig   `yaml:"registry"`
+	Health       HealthConfig     `yaml:"health"`
 }
 
 func LoadConfig(path string) (*AppConfig, error) {

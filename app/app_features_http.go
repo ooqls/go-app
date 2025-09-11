@@ -1,76 +1,54 @@
 package app
 
 import (
-	"crypto"
-	"crypto/x509"
+	"net/http"
 )
 
 const (
-	http_caClientOpt      string = "opt-ca-http-client"
-	http_clientCertOpt string = "opt-client-cert-http-client"
-	http_clientPrivateKeyOpt  string = "opt-client-key-http-client"
+	http_portOpt   string = "opt-http-port"
+	http_muxOpt    string = "opt-http-mux"
 )
 
 type httpOpt struct {
 	featureOpt
 }
 
-func WithCertificates(certs []x509.Certificate) httpOpt {
+func WithHttpPort(port int) httpOpt {
 	return httpOpt{
 		featureOpt: featureOpt{
-			key:   http_clientCertOpt,
-			value: certs,
+			key:   http_portOpt,
+			value: port,
 		},
 	}
 }
 
-func WithCaPool(pool x509.CertPool) httpOpt {
+func WithHttpMux(mux *http.ServeMux) httpOpt {
 	return httpOpt{
 		featureOpt: featureOpt{
-			key:   http_caClientOpt,
-			value: pool,
+			key:   http_muxOpt,
+			value: mux,
 		},
 	}
 }
 
-func WithClientCertificates(cert []x509.Certificate) httpOpt {
-	return httpOpt{
-		featureOpt: featureOpt{
-			key:   http_clientCertOpt,
-			value: cert,
-		},
-	}
+type HTTPFeature struct {
+	Enabled bool
+	Port    int
+	Mux     *http.ServeMux
 }
 
-func WithPrivateKey(key crypto.PrivateKey) httpOpt {
-	return httpOpt{
-		featureOpt: featureOpt{
-			key: http_clientPrivateKeyOpt,
-			value: key,
-		},
-	}
-}
-
-type HTTPClientFeature struct {
-	Enabled            bool
-	CA                 *x509.CertPool
-	ClientCertificates []x509.Certificate
-	PrivateKey         *crypto.PrivateKey
-}
-
-func HTTPClient(opts ...httpOpt) HTTPClientFeature {
-	f := HTTPClientFeature{
+func HTTP(opts ...httpOpt) HTTPFeature {
+	f := HTTPFeature{
 		Enabled: true,
+		Mux:     http.NewServeMux(),
 	}
 
 	for _, o := range opts {
 		switch o.key {
-		case http_caClientOpt:
-			f.CA = o.value.(*x509.CertPool)
-		case http_clientCertOpt:
-			f.ClientCertificates = o.value.([]x509.Certificate)
-		case http_clientPrivateKeyOpt:
-			f.PrivateKey = o.value.(*crypto.PrivateKey)
+		case http_portOpt:
+			f.Port = o.value.(int)
+		case http_muxOpt:
+			f.Mux = o.value.(*http.ServeMux)
 		}
 	}
 

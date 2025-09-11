@@ -5,20 +5,15 @@ type featureOpt struct {
 	value interface{}
 }
 
-func LoggingAPI() LoggingAPIFeature {
-	return LoggingAPIFeature{
-		Enabled: true,
-	}
-}
-
-type LoggingAPIFeature struct {
-	Enabled bool
-}
-
 func WithConfig(cfg *AppConfig) Features {
 	return Features{
-		LoggingAPI: LoggingAPIFeature{
+		LoggingAPI: LoggingApiFeature{
 			Enabled: cfg.LoggingAPI.Enabled,
+			Port:    cfg.LoggingAPI.Port,
+		},
+		Gin: GinFeature{
+			Enabled: cfg.Gin.Enabled,
+			Port:    cfg.Gin.Port,
 		},
 		Docs: DocsFeature{
 			Enabled:     cfg.DocsConfig.Enabled,
@@ -38,6 +33,11 @@ func WithConfig(cfg *AppConfig) Features {
 			PubKeyPath:              cfg.JWT.RSAPubKeyPath,
 			tokenConfiguration:      cfg.JWT.TokenConfigurations,
 		},
+		Health: HealthFeature{
+			Enabled:  cfg.Health.Enabled,
+			Path:     cfg.Health.Path,
+			Interval: cfg.Health.Interval,
+		},
 		SQL: SQLFeature{
 			Enabled:               cfg.SQLFiles.Enabled,
 			SQLPackage:            cfg.SQLFiles.SQLPackage,
@@ -54,12 +54,14 @@ func WithConfig(cfg *AppConfig) Features {
 }
 
 type Features struct {
-	LoggingAPI LoggingAPIFeature
+	LoggingAPI LoggingApiFeature
 	RSA        RSAFeature
 	JWT        JWTFeature
 	SQL        SQLFeature
-	HTTP       HTTPClientFeature
+	HTTP       HTTPFeature
 	TLS        TLSFeature
 	Registry   RegistryFeature
 	Docs       DocsFeature
+	Health     HealthFeature
+	Gin        GinFeature
 }

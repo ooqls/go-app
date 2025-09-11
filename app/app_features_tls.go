@@ -1,5 +1,12 @@
 package app
 
+import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"os"
+)
+
 const (
 	tls_caFileOpt   string = "opt-server-ca-pool"
 	tls_crtOpt      string = "opt-server-cert"
@@ -95,6 +102,44 @@ type TLSFeature struct {
 	ServerKeyFile   string
 }
 
+func (f *TLSFeature) TLSConfig() (*tls.Config, error) {
+	pool, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get system cert pool: %v", err)
+	}
+
+	cfg := &tls.Config{
+		RootCAs: pool,
+	}
+
+	if f.CAFile != "" {
+		b, err := os.ReadFile(f.CAFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read ca file %s: %v", f.CAFile, err)
+		}
+
+		ok := pool.AppendCertsFromPEM(b)
+		if !ok {
+			return nil, fmt.Errorf("failed to add pem bytes from ca file %s", f.CAFile)
+		}
+	}
+
+	if len(f.ServerCertFile) > 0 && len(f.ServerKeyFile) > 0 {
+		cert, err := tls.LoadX509KeyPair(f.ServerCertFile, f.ServerKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load x509 key pair: %v", err)
+		}
+		cfg.Certificates = append(cfg.Certificates, cert)
+	} else if len(f.ServerCertBytes) > 0 && len(f.ServerKeyBytes) > 0 {
+		cert, err := tls.X509KeyPair(f.ServerCertBytes, f.ServerKeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load x509 key pair: %v", err)
+		}
+		cfg.Certificates = append(cfg.Certificates, cert)
+	}
+
+	return cfg, nil
+}
 func TLS(opts ...tlsOpt) TLSFeature {
 	f := TLSFeature{
 		Enabled: true,

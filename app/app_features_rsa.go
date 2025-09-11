@@ -1,5 +1,10 @@
 package app
 
+var RsaPrivKeyPathFlag string
+var RsaPubKeyPathFlag string
+var caBundlePathFlag string
+
+
 const (
 	rsa_privateKeyPathOpt string = "opt-private-key-path"
 	rsa_publicKeyPathOpt  string = "opt-public-key-path"
@@ -13,6 +18,15 @@ func WithPrivateKeyPath(p string) rsaOpt {
 	return rsaOpt{
 		featureOpt: featureOpt{
 			key:   rsa_privateKeyPathOpt,
+			value: p,
+		},
+	}
+}
+
+func WithPublicKeyPath(p string) rsaOpt {
+	return rsaOpt{
+		featureOpt: featureOpt{
+			key:   rsa_publicKeyPathOpt,
 			value: p,
 		},
 	}

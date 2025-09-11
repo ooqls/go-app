@@ -4,6 +4,8 @@ const (
 	registry_pathOpt string = "opt-registry-path"
 )
 
+var registryPathFlag string
+
 type registryOpt struct {
 	featureOpt
 }

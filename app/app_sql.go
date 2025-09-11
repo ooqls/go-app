@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (a *app) _seed_pgx_files(ctx *StartupContext, files []string) bool {
+func (a *app) _seed_pgx_files(ctx *AppContext, files []string) bool {
 	l := ctx.L()
 	sqlSeeded := len(files) > 0
 
@@ -25,7 +25,7 @@ func (a *app) _seed_pgx_files(ctx *StartupContext, files []string) bool {
 	return sqlSeeded
 }
 
-func (a *app) _seed_sqlx_files(ctx *StartupContext, files []string) bool {
+func (a *app) _seed_sqlx_files(ctx *AppContext, files []string) bool {
 	l := ctx.L()
 	c := gosqlx.GetSQLX()
 	sqlSeeded := len(files) > 0
@@ -40,7 +40,7 @@ func (a *app) _seed_sqlx_files(ctx *StartupContext, files []string) bool {
 	return sqlSeeded
 }
 
-func (a *app) _startup_sql(ctx *StartupContext) error {
+func (a *app) _startup_sql(ctx *AppContext) error {
 	l := ctx.L()
 	sqlFiles := []string{}
 
@@ -108,5 +108,6 @@ func (a *app) _startup_sql(ctx *StartupContext) error {
 		l.Debug("[Startup SQL] no SQL statements")
 	}
 
+	a.state.SQLInitialized = true
 	return nil
 }

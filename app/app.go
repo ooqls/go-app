@@ -4,23 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
+	"sync"
 
-	"github.com/gin-gonic/gin"
 	"github.com/ooqls/go-log"
 	"go.uber.org/zap"
 )
-
-var registryPathFlag string
-
-var sqlFilesFlag string
-
-var RsaPrivKeyPathFlag string
-var RsaPubKeyPathFlag string
-
-var JwtPrivKeyPathFlag string
-var JwtPubKeyPathFlag string
-
-var caBundlePathFlag string
 
 func init() {
 	flag.StringVar(&registryPathFlag, "registry", "", "Path to the registry path")
@@ -30,45 +19,71 @@ func init() {
 	flag.StringVar(&JwtPrivKeyPathFlag, "jwt-private-key", "", "Path to a JWT private key")
 	flag.StringVar(&JwtPubKeyPathFlag, "jwt-public-key", "", "Path to a jwt public key")
 	flag.StringVar(&caBundlePathFlag, "ca-bundle", "", "Path to a ca bundle")
+	flag.StringVar(&healthPathFlag, "health-path", "", "Path to the health path")
+	flag.IntVar(&docsPortFlag, "docs-port", 8080, "Port to serve docs on")
+	flag.StringVar(&docsPathFlag, "docs-path", "/docs/", "Path to the docs directory")
+	flag.StringVar(&docsApiPathFlag, "docs-api-path", "/api/docs", "Path to the docs API")
 }
 
 func New(appName string, features Features) *app {
 	return &app{
-		appName:  appName,
-		e:        gin.New(),
-		l:        log.NewLogger(appName),
-		features: features,
+		appName:    appName,
+		l:          log.NewLogger(appName),
+		features:   features,
+		threadWg:   &sync.WaitGroup{},
+		httpClient: http.DefaultClient,
 	}
 }
 
 type app struct {
-	appName    string
-	preStartup func()
-	startup    func(ctx *StartupContext) error
-	onPanic    func(err interface{})
-	e          *gin.Engine
-	l          *zap.Logger
-	state      AppState
-	features   Features
+	appName         string
+	setup           func(ctx *AppContext) error
+	running         func(ctx *AppContext) error
+	stopped         func(ctx *AppContext) error
+	healthCheck     func() bool
+	onPanic         func(err interface{})
+	l               *zap.Logger
+	state           AppState
+	features        Features
 	testEnvironment *TestEnvironment
+	httpClient      *http.Client
+	stopServers     []func() (string, error)
+	threadWg        *sync.WaitGroup
 }
 
 func (a *app) WithTestEnvironment(env TestEnvironment) {
 	a.testEnvironment = &env
 }
 
+func (a *app) IsRunning() bool {
+	return a.state.Running
+}
 
-func (a *app) OnPreStartup(f func()) *app {
-	a.preStartup = f
+func (a *app) OnStartup(f func(ctx *AppContext) error) *app {
+	a.setup = f
 	return a
 }
 
-func (a *app) OnStartup(f func(ctx *StartupContext) error) *app {
-	a.startup = f
+func (a *app) OnRunning(f func(ctx *AppContext) error) *app {
+	a.running = f
 	return a
 }
 
-func (a *app) Run() error {
+func (a *app) OnStopped(f func(ctx *AppContext) error) *app {
+	a.stopped = f
+	return a
+}
+
+func (a *app) IsHealthy() bool {
+	return a.state.Healthy
+}
+
+func (a *app) SetHealthCheck(f func() bool) *app {
+	a.healthCheck = f
+	return a
+}
+
+func (a *app) Run(ctx context.Context) error {
 	flag.Parse()
 	if a.testEnvironment != nil {
 		cleanup, err := a.testEnvironment.Start(context.Background())
@@ -78,7 +93,7 @@ func (a *app) Run() error {
 		defer cleanup()
 	}
 
-	if err := a._startup(); err != nil {
+	if err := a._startup(ctx); err != nil {
 		return err
 	}
 

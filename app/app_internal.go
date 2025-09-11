@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ooqls/go-crypto/jwt"
@@ -16,41 +17,67 @@ import (
 	"go.uber.org/zap"
 )
 
-func (a *app) _startup_docs(ctx *StartupContext) error {
+func (a *app) _start_http_server(ctx *AppContext, handler http.Handler, port int, name string) error {
 	l := ctx.L()
-	l.Info("[Startup docs] Serving htnl docs",
-		zap.String("path", a.features.Docs.DocsPath), zap.String("api_path", a.features.Docs.DocsApiPath))
-	a.e.GET(a.features.Docs.DocsApiPath, func(ctx *gin.Context) {
-		ctx.File(a.features.Docs.DocsPath)
+	srv := &http.Server{
+		Addr:    fmt.Sprintf("0.0.0.0:%d", port),
+		Handler: handler,
+	}
+	if a.features.TLS.Enabled {
+		tlsConfig, err := a.features.TLS.TLSConfig()
+		if err != nil {
+			l.Error("[Startup docs] encountered an error on startup", zap.Error(err))
+			return err
+		}
+		srv.TLSConfig = tlsConfig
+	}
+
+	a.threadWg.Add(1)
+	go func() {
+		defer a.threadWg.Done()
+		if a.features.TLS.Enabled {
+			err := srv.ListenAndServeTLS("", "")
+			if err != nil && err != http.ErrServerClosed {
+				l.Error("[Startup http] encountered an error on startup", 
+					zap.Error(err), zap.String("name", name))
+				return
+			}
+		} else {
+			err := srv.ListenAndServe()
+			if err != nil && err != http.ErrServerClosed {
+				l.Error("[Startup http] encountered an error on startup", 
+					zap.Error(err), zap.String("name", name))
+				return
+			}
+		}
+	}()
+
+	a.stopServers = append(a.stopServers, func() (string, error) {
+		return name, srv.Shutdown(ctx)
 	})
 
 	return nil
 }
 
-func (a *app) _startup_http(ctx *StartupContext) error {
-	ca := a.features.HTTP.CA
-	clientCert := a.features.HTTP.ClientCertificates
-	privateKey := a.features.HTTP.PrivateKey
+func (a *app) _startup_docs(ctx *AppContext) error {
+	l := ctx.L()
+	l.Info("[Startup docs] Serving htnl docs",
+		zap.String("path", a.features.Docs.DocsPath), zap.String("api_path", a.features.Docs.DocsApiPath))
+	docsFs := http.FS(os.DirFS(a.features.Docs.DocsPath))
+	mux := http.NewServeMux()
+	mux.Handle(a.features.Docs.DocsApiPath, http.FileServer(docsFs))
 
-	certChain := make([][]byte, 512)
-	for _, crt := range clientCert {
-		certChain = append(certChain, crt.Raw)
+	err := a._start_http_server(ctx, mux, a.features.Docs.DocsPort, "docs")
+	if err != nil {
+		l.Error("[Startup docs] encountered an error on startup", zap.Error(err))
+		return err
 	}
 
-	tlsCert := tls.Certificate{
-		Certificate: certChain,
-		PrivateKey:  privateKey,
-	}
-
-	trans := http.DefaultTransport.(*http.Transport)
-	trans.TLSClientConfig.Certificates = append(trans.TLSClientConfig.Certificates, tlsCert)
-	trans.TLSClientConfig.ClientCAs = ca
-	trans.TLSClientConfig.RootCAs = ca
-
+	a.state.DocsInitialized = true
 	return nil
 }
 
-func (a *app) _startup_tls(ctx *StartupContext) error {
+func (a *app) _startup_tls(ctx *AppContext) error {
 	f := a.features.TLS
 	l := ctx.L()
 	cfg := &tls.Config{}
@@ -122,12 +149,32 @@ func (a *app) _startup_tls(ctx *StartupContext) error {
 		cfg.Certificates = append(cfg.Certificates, tlsCert)
 	}
 
-	ctx.tlsConfig = cfg
+	a.httpClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: cfg,
+		},
+	}
 
+	a.state.TLSInitialized = true
 	return nil
 }
 
-func (a *app) _startup_rsa(ctx *StartupContext) error {
+func (a *app) _startup_logging_api(ctx *AppContext) error {
+	l := ctx.L()
+
+	l.Debug("[Startup Logging API] adding logging routes")
+	handler := v1.Std()
+	err := a._start_http_server(ctx, handler, a.features.LoggingAPI.Port, "logging-api")
+	if err != nil {
+		l.Error("[Startup Logging API] encountered an error on startup", zap.Error(err))
+		return err
+	}
+	l.Debug("[Startup Logging API] finished adding logging routes")
+	a.state.LoggingAPIInitialized = true
+	return nil
+}
+
+func (a *app) _startup_rsa(ctx *AppContext) error {
 	l := ctx.L()
 
 	privKeyPath := a.features.RSA.PrivateKeyPath
@@ -165,10 +212,11 @@ func (a *app) _startup_rsa(ctx *StartupContext) error {
 		keys.SetRSA(rsa)
 	}
 
+	a.state.RSAInitialized = true
 	return nil
 }
 
-func (a *app) _startup_jwt(ctx *StartupContext) error {
+func (a *app) _startup_jwt(ctx *AppContext) error {
 	l := ctx.L()
 
 	configs := a.features.JWT.tokenConfiguration
@@ -226,10 +274,11 @@ func (a *app) _startup_jwt(ctx *StartupContext) error {
 		ctx.issuerToTokenConfigs[cfg.Issuer] = cfg
 	}
 
+	a.state.JWTInitialized = true
 	return nil
 }
 
-func (a *app) _startup_registry(ctx *StartupContext) error {
+func (a *app) _startup_registry(ctx *AppContext) error {
 	l := ctx.L()
 
 	if a.features.Registry.registryPath != nil && *a.features.Registry.registryPath != "" {
@@ -251,14 +300,172 @@ func (a *app) _startup_registry(ctx *StartupContext) error {
 		l.Debug("[Startup Registry] no registry path provided, using localhost")
 		registry.InitLocalhost()
 	}
+	a.state.RegistryInitialized = true
+	return nil
+
+}
+
+func (a *app) _startup_health(ctx *AppContext) error {
+	l := ctx.L()
+	l.Info("[Startup Health] initializing health with path", zap.String("path", a.features.Health.Path))
+	port := 8080
+	if a.features.Gin.Enabled {
+		port = a.features.Gin.Port
+		e := a.features.Gin.Engine
+		e.GET(a.features.Health.Path, func(ctx *gin.Context) {
+			if a.healthCheck != nil {
+				if a.healthCheck() {
+					ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+					a.state.Healthy = true
+				} else {
+					ctx.JSON(http.StatusInternalServerError, gin.H{"status": "error"})
+					a.state.Healthy = false
+				}
+			} else {
+				ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+				a.state.Healthy = true
+			}
+		})
+	}
+
+	if a.features.HTTP.Enabled {
+		port = a.features.HTTP.Port
+		a.features.HTTP.Mux.HandleFunc(a.features.Health.Path, func(w http.ResponseWriter, r *http.Request) {
+			if a.healthCheck != nil {
+				if a.healthCheck() {
+					w.WriteHeader(http.StatusOK)
+					a.state.Healthy = true
+				} else {
+					w.WriteHeader(http.StatusInternalServerError)
+					a.state.Healthy = false
+				}
+			} else {
+				w.WriteHeader(http.StatusOK)
+				a.state.Healthy = true
+			}
+		})
+	}
+
+	a.threadWg.Add(1)
+	go func() {
+		protocol := "http"
+		if a.features.TLS.Enabled {
+			protocol = "https"
+		}
+
+		defer a.threadWg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Duration(a.features.Health.Interval) * time.Second):
+				url := fmt.Sprintf("%s://localhost:%d%s",
+					protocol,
+					port, a.features.Health.Path)
+				_, err := a.httpClient.Get(url)
+				if err != nil {
+					l.Error("[Startup Health] got an error from health check", zap.Error(err))
+				}
+			}
+		}
+	}()
 
 	return nil
 
 }
 
-func (a *app) _startup() error {
+func (a *app) _run_gin(ctx *AppContext) error {
+	l := a.l
+	server := &http.Server{
+		Addr:    fmt.Sprintf("0.0.0.0:%d", a.features.Gin.Port),
+		Handler: a.features.Gin.Engine,
+	}
+
+	if a.features.TLS.Enabled {
+		tlsConfig, err := a.features.TLS.TLSConfig()
+		if err != nil {
+			l.Error("[Startup] encountered an error on startup", zap.Error(err))
+			return err
+		}
+		server.TLSConfig = tlsConfig
+	}
+
+	l.Debug("[Startup] Starting TLS server with Gin")
+	a.threadWg.Add(2)
+	go func() {
+		defer a.threadWg.Done()
+		err := server.ListenAndServeTLS("", "")
+		if err != nil {
+			l.Error("[Startup] encountered an error on startup", zap.Error(err))
+			return
+		}
+	}()
+	go func() {
+		defer a.threadWg.Done()
+		<-ctx.Done()
+		err := server.Shutdown(ctx)
+		if err != nil {
+			l.Error("[Startup] encountered an error on startup", zap.Error(err))
+			return
+		}
+	}()
+
+	a.state.GinInitialized = true
+	return nil
+}
+
+func (a *app) _run_http(ctx *AppContext) error {
+	l := a.l
+	err := a._start_http_server(ctx, a.features.HTTP.Mux, a.features.HTTP.Port, "http")
+	if err != nil {
+		l.Error("[Startup] encountered an error on startup", zap.Error(err))
+		return err
+	}
+
+	a.state.HTTPInitialized = true
+	return nil
+}
+
+func (a *app) _run(ctx *AppContext) error {
 	l := a.l
 
+	if a.features.Gin.Enabled {
+		err := a._run_gin(ctx)
+		if err != nil {
+			a.l.Error("[Startup] encountered an error when running gin", zap.Error(err))
+			return err
+		}
+	}
+
+	if a.features.HTTP.Enabled {
+		err := a._run_http(ctx)
+		if err != nil {
+			a.l.Error("[Startup] encountered an error when running http", zap.Error(err))
+			return err
+		}
+	}
+	a.state.Running = true
+	a.state.Healthy = true
+
+	a.threadWg.Add(1)
+	go func() {
+		defer a.threadWg.Done()
+		<-ctx.Done()
+		for _, f := range a.stopServers {
+			server, err := f()
+			if err != nil {
+				l.Error("[Startup] encountered an error when stopping server", zap.Error(err), zap.String("server", server))
+			}
+
+			l.Info("[Startup] stopped server", zap.String("server", server))
+		}
+	}()
+	
+	return nil
+}
+
+func (a *app) _startup(ctx context.Context) error {
+	l := a.l
 	if a.onPanic != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -268,16 +475,10 @@ func (a *app) _startup() error {
 		}()
 	}
 
-	if a.preStartup != nil {
-		l.Debug("[Startup] running pre-startup function")
-		a.preStartup()
-		l.Debug("[Startup] pre-startup function completed")
-	}
-
-	startup_funcs := []func(ctx *StartupContext) error{}
+	startup_funcs := []func(ctx *AppContext) error{}
 
 	if a.features.Registry.enabled {
-		l.Info("[Startup] Enabled registry")
+		l.Info("[Startup] registry enabled")
 		startup_funcs = append(startup_funcs, a._startup_registry)
 	}
 
@@ -296,41 +497,70 @@ func (a *app) _startup() error {
 		startup_funcs = append(startup_funcs, a._startup_sql)
 	}
 
-	if a.features.HTTP.Enabled {
-		l.Info("[Startup] HTTP enabled")
-		startup_funcs = append(startup_funcs, a._startup_http)
-	}
-
 	if a.features.Docs.Enabled {
 		l.Info("[Startup] Docs enabled")
 		startup_funcs = append(startup_funcs, a._startup_docs)
 	}
 
+	if a.features.LoggingAPI.Enabled {
+		l.Info("[Startup] Logging API enabled")
+		startup_funcs = append(startup_funcs, a._startup_logging_api)
+	}
+
 	if a.features.TLS.Enabled {
-		l.Info("[Startup] Gin enabled")
+		l.Info("[Startup] TLS enabled")
 		startup_funcs = append(startup_funcs, a._startup_tls)
 	}
 
-	ctx := NewStartupContext(context.Background(), a.l, a.e)
+	if a.features.Health.Enabled {
+		l.Info("[Startup] Health enabled")
+		startup_funcs = append(startup_funcs, a._startup_health)
+	}
+
+	appCtx := NewAppContext(ctx, a.l)
 	for _, f := range startup_funcs {
-		err := f(ctx)
+		err := f(appCtx)
 		if err != nil {
 			return err
 		}
 	}
 
-	l.Debug("[Startup] adding logging routes")
-	v1.AddRoutes(a.e)
-	l.Debug("[Startup] finished adding logging routes")
-	if a.startup != nil {
+	if a.setup != nil {
 		l.Debug("[Startup] Running app...")
-		err := a.startup(ctx)
+		err := a.setup(appCtx)
 		if err != nil {
 			l.Error("[Startup] encountered an error on startup", zap.Error(err))
 			return err
 		}
-		l.Debug("[Startup] app exited")
+	}
 
+	err := a._run(appCtx)
+	if err != nil {
+		l.Error("[Startup] encountered an error on startup", zap.Error(err))
+		return err
+	}
+
+	if a.running != nil {
+		a.threadWg.Add(1)
+		go func() {
+			defer a.threadWg.Done()
+			l.Debug("[Startup] Running app...")
+			err := a.running(appCtx)
+			if err != nil {
+				l.Error("[Startup] encountered an error on running", zap.Error(err))
+			}
+		}()
+	}
+
+	a.threadWg.Wait()
+	l.Debug("[Startup] app stopped")
+	a.state.Running = false
+	if a.stopped != nil {
+		err := a.stopped(appCtx)
+		if err != nil {
+			l.Error("[Startup] encountered an error on stopping", zap.Error(err))
+			return err
+		}
 	}
 
 	return nil
