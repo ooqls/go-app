@@ -24,7 +24,7 @@ func (e *TestEnvironment) Start(ctx context.Context) (func(), error) {
 	}
 
 	if e.Redis {
-		redisCont := testutils.InitRedis()
+		redisCont := testutils.StartRedis(ctx)
 		containers = append(containers, redisCont)
 	}
 
