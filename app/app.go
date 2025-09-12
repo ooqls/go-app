@@ -99,3 +99,7 @@ func (a *app) Run(ctx context.Context) error {
 
 	return nil
 }
+
+func (a *app) Features() *Features {
+	return &a.features
+}
