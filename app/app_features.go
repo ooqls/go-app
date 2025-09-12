@@ -1,5 +1,11 @@
 package app
 
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
 type featureOpt struct {
 	key   string
 	value interface{}
@@ -11,9 +17,15 @@ func WithConfig(cfg *AppConfig) Features {
 			Enabled: cfg.LoggingAPI.Enabled,
 			Port:    cfg.LoggingAPI.Port,
 		},
+		HTTP: HTTPFeature{
+			Enabled: cfg.HTTP.Enabled,
+			Port:    cfg.HTTP.Port,
+			Mux:     http.NewServeMux(),
+		},
 		Gin: GinFeature{
 			Enabled: cfg.Gin.Enabled,
 			Port:    cfg.Gin.Port,
+			Engine:  gin.New(),
 		},
 		Docs: DocsFeature{
 			Enabled:     cfg.DocsConfig.Enabled,
@@ -25,6 +37,11 @@ func WithConfig(cfg *AppConfig) Features {
 			ServerCertFile: cfg.TLS.CertFile,
 			ServerKeyFile:  cfg.TLS.KeyFile,
 			CAFile:         cfg.TLS.CaPath,
+		},
+		RSA: RSAFeature{
+			Enabled:        cfg.RSA.Enabled,
+			PrivateKeyPath: cfg.RSA.PrivateKeyPath,
+			PublicKeyPath:  cfg.RSA.PublicKeyPath,
 		},
 		JWT: JWTFeature{
 			Enabled:                 cfg.JWT.Enabled,

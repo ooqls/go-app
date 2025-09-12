@@ -63,6 +63,17 @@ type GinConfig struct {
 	Port    int  `yaml:"port"`
 }
 
+type HTTPConfig struct {
+	Enabled bool `yaml:"enabled"`
+	Port    int  `yaml:"port"`
+}
+
+type RSAConfig struct {
+	Enabled        bool   `yaml:"enabled"`
+	PrivateKeyPath string `yaml:"private_key_path"`
+	PublicKeyPath  string `yaml:"public_key_path"`
+}
+
 type AppConfig struct {
 	LoggingAPI   LoggingAPIConfig `yaml:"logging_api"`
 	Gin          GinConfig        `yaml:"gin"`
@@ -73,6 +84,8 @@ type AppConfig struct {
 	SQLFiles     SQLFilesConfig   `yaml:"sql"`
 	Registry     RegistryConfig   `yaml:"registry"`
 	Health       HealthConfig     `yaml:"health"`
+	HTTP         HTTPConfig       `yaml:"http"`
+	RSA          RSAConfig        `yaml:"rsa"`
 }
 
 func LoadConfig(path string) (*AppConfig, error) {
