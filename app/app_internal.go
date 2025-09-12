@@ -38,14 +38,14 @@ func (a *app) _start_http_server(ctx *AppContext, handler http.Handler, port int
 		if a.features.TLS.Enabled {
 			err := srv.ListenAndServeTLS("", "")
 			if err != nil && err != http.ErrServerClosed {
-				l.Error("[Startup http] encountered an error on startup", 
+				l.Error("[Startup http] encountered an error on startup",
 					zap.Error(err), zap.String("name", name))
 				return
 			}
 		} else {
 			err := srv.ListenAndServe()
 			if err != nil && err != http.ErrServerClosed {
-				l.Error("[Startup http] encountered an error on startup", 
+				l.Error("[Startup http] encountered an error on startup",
 					zap.Error(err), zap.String("name", name))
 				return
 			}
@@ -384,20 +384,29 @@ func (a *app) _run_gin(ctx *AppContext) error {
 	if a.features.TLS.Enabled {
 		tlsConfig, err := a.features.TLS.TLSConfig()
 		if err != nil {
-			l.Error("[Startup] encountered an error on startup", zap.Error(err))
+			l.Error("[Running Gin] Failed to get TLS config", zap.Error(err))
 			return err
 		}
 		server.TLSConfig = tlsConfig
 	}
 
-	l.Debug("[Startup] Starting TLS server with Gin")
 	a.threadWg.Add(2)
 	go func() {
 		defer a.threadWg.Done()
-		err := server.ListenAndServeTLS("", "")
-		if err != nil {
-			l.Error("[Startup] encountered an error on startup", zap.Error(err))
-			return
+		if a.features.TLS.Enabled {
+			l.Debug("[Running Gin] Starting HTTPS server with Gin")
+			err := server.ListenAndServeTLS("", "")
+			if err != nil {
+				l.Error("[Running Gin] encountered an error on listen and serve", zap.Error(err))
+				return
+			}
+		} else {
+			l.Debug("[Running Gin] Starting HTTP server with Gin")
+			err := server.ListenAndServe()
+			if err != nil {
+				l.Error("[Running Gin] encountered an error on listen and serve", zap.Error(err))
+				return
+			}
 		}
 	}()
 	go func() {
@@ -405,7 +414,7 @@ func (a *app) _run_gin(ctx *AppContext) error {
 		<-ctx.Done()
 		err := server.Shutdown(ctx)
 		if err != nil {
-			l.Error("[Startup] encountered an error on startup", zap.Error(err))
+			l.Error("[Running Gin] encountered an error on startup", zap.Error(err))
 			return
 		}
 	}()
@@ -418,7 +427,7 @@ func (a *app) _run_http(ctx *AppContext) error {
 	l := a.l
 	err := a._start_http_server(ctx, a.features.HTTP.Mux, a.features.HTTP.Port, "http")
 	if err != nil {
-		l.Error("[Startup] encountered an error on startup", zap.Error(err))
+		l.Error("[Running HTTP] encountered an error on startup", zap.Error(err))
 		return err
 	}
 
@@ -432,7 +441,7 @@ func (a *app) _run(ctx *AppContext) error {
 	if a.features.Gin.Enabled {
 		err := a._run_gin(ctx)
 		if err != nil {
-			a.l.Error("[Startup] encountered an error when running gin", zap.Error(err))
+			a.l.Error("[Running Gin] encountered an error when running gin", zap.Error(err))
 			return err
 		}
 	}
@@ -440,7 +449,7 @@ func (a *app) _run(ctx *AppContext) error {
 	if a.features.HTTP.Enabled {
 		err := a._run_http(ctx)
 		if err != nil {
-			a.l.Error("[Startup] encountered an error when running http", zap.Error(err))
+			a.l.Error("[Running HTTP] encountered an error when running http", zap.Error(err))
 			return err
 		}
 	}
@@ -460,7 +469,7 @@ func (a *app) _run(ctx *AppContext) error {
 			l.Info("[Startup] stopped server", zap.String("server", server))
 		}
 	}()
-	
+
 	return nil
 }
 
@@ -529,14 +538,14 @@ func (a *app) _startup(ctx context.Context) error {
 		l.Debug("[Startup] Running app...")
 		err := a.setup(appCtx)
 		if err != nil {
-			l.Error("[Startup] encountered an error on startup", zap.Error(err))
+			l.Error("[Startup] encountered an error on setup", zap.Error(err))
 			return err
 		}
 	}
 
 	err := a._run(appCtx)
 	if err != nil {
-		l.Error("[Startup] encountered an error on startup", zap.Error(err))
+		l.Error("[Startup] encountered an error when running app", zap.Error(err))
 		return err
 	}
 
@@ -547,7 +556,7 @@ func (a *app) _startup(ctx context.Context) error {
 			l.Debug("[Startup] Running app...")
 			err := a.running(appCtx)
 			if err != nil {
-				l.Error("[Startup] encountered an error on running", zap.Error(err))
+				l.Error("[Startup] encountered an error during running", zap.Error(err))
 			}
 		}()
 	}
