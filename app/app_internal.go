@@ -63,14 +63,13 @@ func (a *app) _startup_docs(ctx *AppContext) error {
 	l := ctx.L()
 	l.Info("[Startup docs] Serving htnl docs",
 		zap.String("path", a.features.Docs.DocsPath), zap.String("api_path", a.features.Docs.DocsApiPath))
-	docsFs := http.FS(os.DirFS(a.features.Docs.DocsPath))
-	mux := http.NewServeMux()
-	mux.Handle(a.features.Docs.DocsApiPath, http.FileServer(docsFs))
+	if a.Features().HTTP.Enabled {
+		docsFs := http.FS(os.DirFS(a.features.Docs.DocsPath))
+		a.Features().HTTP.Mux.Handle(a.features.Docs.DocsApiPath, http.FileServer(docsFs))
+	}
 
-	err := a._start_http_server(ctx, mux, a.features.Docs.DocsPort, "docs")
-	if err != nil {
-		l.Error("[Startup docs] encountered an error on startup", zap.Error(err))
-		return err
+	if a.Features().Gin.Enabled {
+		a.Features().Gin.Engine.StaticFS(a.features.Docs.DocsPath, http.FS(os.DirFS(a.features.Docs.DocsPath)))
 	}
 
 	a.state.DocsInitialized = true
