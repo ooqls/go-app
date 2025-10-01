@@ -11,6 +11,7 @@ type DocsConfig struct {
 	Enabled     bool   `yaml:"enabled"`
 	DocsApiPath string `yaml:"docs_api_path"`
 	DocsDir     string `yaml:"docs_dir"`
+	DocsPort    int    `yaml:"docs_port"`
 }
 
 type ServerConfig struct {

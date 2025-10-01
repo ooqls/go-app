@@ -31,6 +31,7 @@ func WithConfig(cfg *AppConfig) Features {
 			Enabled:     cfg.DocsConfig.Enabled,
 			DocsPath:    cfg.DocsConfig.DocsDir,
 			DocsApiPath: cfg.DocsConfig.DocsApiPath,
+			DocsPort:    cfg.DocsConfig.DocsPort,
 		},
 		TLS: TLSFeature{
 			Enabled:        cfg.TLS.Enabled,
