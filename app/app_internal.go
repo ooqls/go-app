@@ -69,7 +69,7 @@ func (a *app) _startup_docs(ctx *AppContext) error {
 	}
 
 	if a.Features().Gin.Enabled {
-		a.Features().Gin.Engine.StaticFS(a.features.Docs.DocsPath, http.FS(os.DirFS(a.features.Docs.DocsPath)))
+		a.Features().Gin.Engine.StaticFS(a.features.Docs.DocsApiPath, http.FS(os.DirFS(a.features.Docs.DocsPath)))
 	}
 
 	a.state.DocsInitialized = true
