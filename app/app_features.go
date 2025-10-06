@@ -26,6 +26,7 @@ func WithConfig(cfg *AppConfig) Features {
 			Enabled: cfg.Gin.Enabled,
 			Port:    cfg.Gin.Port,
 			Engine:  gin.New(),
+			Cors:    cfg.Gin.Cors.CorsConfig(),
 		},
 		Docs: DocsFeature{
 			Enabled:     cfg.DocsConfig.Enabled,

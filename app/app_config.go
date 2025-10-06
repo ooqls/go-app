@@ -77,8 +77,12 @@ type CorsConfig struct {
 	MaxAge                 int      `yaml:"max_age"`
 }
 
-func (c *CorsConfig) CorsConfig() cors.Config {
-	return cors.Config{
+func (c *CorsConfig) CorsConfig() *cors.Config {
+	if !c.Enabled {
+		return nil
+	}
+	
+	return &cors.Config{
 		AllowAllOrigins:        c.AllowAllOrigins,
 		AllowOrigins:           c.AllowOrigins,
 		AllowMethods:           c.AllowMethods,
