@@ -2,7 +2,9 @@ package app
 
 import (
 	"os"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/ooqls/go-crypto/jwt"
 	"gopkg.in/yaml.v2"
 )
@@ -59,9 +61,43 @@ type HealthConfig struct {
 	Interval int    `yaml:"interval"`
 }
 
+type CorsConfig struct {
+	Enabled                bool     `yaml:"enabled"`
+	AllowAllOrigins        bool     `yaml:"allow_all_origins"`
+	AllowOrigins           []string `yaml:"origins"`
+	AllowMethods           []string `yaml:"methods"`
+	Headers                []string `yaml:"headers"`
+	ExposeHeaders          []string `yaml:"expose_headers"`
+	AllowCredentials       bool     `yaml:"allow_credentials"`
+	AllowWildcard          bool     `yaml:"allow_wildcard"`
+	AllowBrowserExtensions bool     `yaml:"allow_browser_extensions"`
+	AllowWebSockets        bool     `yaml:"allow_web_sockets"`
+	AllowFiles             bool     `yaml:"allow_files"`
+	AllowPrivateNetwork    bool     `yaml:"allow_private_network"`
+	MaxAge                 int      `yaml:"max_age"`
+}
+
+func (c *CorsConfig) CorsConfig() cors.Config {
+	return cors.Config{
+		AllowAllOrigins:        c.AllowAllOrigins,
+		AllowOrigins:           c.AllowOrigins,
+		AllowMethods:           c.AllowMethods,
+		AllowHeaders:           c.Headers,
+		ExposeHeaders:          c.ExposeHeaders,
+		AllowCredentials:       c.AllowCredentials,
+		AllowWildcard:          c.AllowWildcard,
+		AllowBrowserExtensions: c.AllowBrowserExtensions,
+		AllowWebSockets:        c.AllowWebSockets,
+		AllowFiles:             c.AllowFiles,
+		AllowPrivateNetwork:    c.AllowPrivateNetwork,
+		MaxAge:                 time.Duration(c.MaxAge) * time.Second,
+	}
+}
+
 type GinConfig struct {
-	Enabled bool `yaml:"enabled"`
-	Port    int  `yaml:"port"`
+	Enabled bool       `yaml:"enabled"`
+	Port    int        `yaml:"port"`
+	Cors    CorsConfig `yaml:"cors"`
 }
 
 type HTTPConfig struct {

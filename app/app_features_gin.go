@@ -1,10 +1,14 @@
 package app
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+)
 
 const (
 	gin_engineOpt string = "opt-gin-engine"
 	gin_portOpt   string = "opt-gin-port"
+	gin_corsOpt   string = "opt-gin-cors"
 )
 
 type ginOpt struct {
@@ -20,9 +24,19 @@ func WithGin(e *gin.Engine) ginOpt {
 	}
 }
 
+func WithGinCors(cors cors.Config) ginOpt {
+	return ginOpt{
+		featureOpt: featureOpt{
+			key:   gin_corsOpt,
+			value: &cors,
+		},
+	}
+}
+
 type GinFeature struct {
 	Enabled bool
 	Port    int
+	Cors    *cors.Config
 	Engine  *gin.Engine
 }
 
@@ -32,6 +46,8 @@ func (f *GinFeature) apply(opt ginOpt) {
 		f.Engine = opt.value.(*gin.Engine)
 	case gin_portOpt:
 		f.Port = opt.value.(int)
+	case gin_corsOpt:
+		f.Cors = opt.value.(*cors.Config)
 	}
 }
 

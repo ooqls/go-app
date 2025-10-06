@@ -3,6 +3,7 @@ module github.com/ooqls/go-app
 go 1.24.2
 
 require (
+	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/ooqls/go-crypto v1.0.4

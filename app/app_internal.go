@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/ooqls/go-crypto/jwt"
 	"github.com/ooqls/go-crypto/keys"
@@ -387,6 +388,10 @@ func (a *app) _run_gin(ctx *AppContext) error {
 			return err
 		}
 		server.TLSConfig = tlsConfig
+	}
+
+	if a.features.Gin.Cors != nil {
+		a.features.Gin.Engine.Use(cors.New(*a.features.Gin.Cors))
 	}
 
 	a.threadWg.Add(2)
