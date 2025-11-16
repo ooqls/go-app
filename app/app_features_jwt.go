@@ -2,8 +2,8 @@ package app
 
 import "github.com/ooqls/go-crypto/jwt"
 
-var JwtPrivKeyPathFlag string
-var JwtPubKeyPathFlag string
+var jwtPrivKeyPathFlag string
+var jwtPubKeyPathFlag string
 
 type jwtOpt struct {
 	featureOpt
@@ -55,8 +55,8 @@ func WithJWTPublicKeyPath(p string) jwtOpt {
 func JWT(opts ...jwtOpt) JWTFeature {
 	f := JWTFeature{
 		Enabled:        true,
-		PrivateKeyPath: JwtPrivKeyPathFlag,
-		PubKeyPath:     JwtPubKeyPathFlag,
+		PrivateKeyPath: jwtPrivKeyPathFlag,
+		PubKeyPath:     jwtPubKeyPathFlag,
 	}
 
 	for _, opt := range opts {

@@ -1,8 +1,7 @@
 package app
 
-var RsaPrivKeyPathFlag string
-var RsaPubKeyPathFlag string
-var caBundlePathFlag string
+var rsaPrivKeyPathFlag string
+var rsaPubKeyPathFlag string
 
 
 const (
@@ -34,8 +33,8 @@ func WithPublicKeyPath(p string) rsaOpt {
 func RSA(opts ...rsaOpt) RSAFeature {
 	f := RSAFeature{
 		Enabled:        true,
-		PrivateKeyPath: RsaPrivKeyPathFlag,
-		PublicKeyPath:  RsaPubKeyPathFlag,
+		PrivateKeyPath: rsaPrivKeyPathFlag,
+		PublicKeyPath:  rsaPubKeyPathFlag,
 	}
 	for _, opt := range opts {
 		f.apply(opt)

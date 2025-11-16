@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/gin-contrib/cors"
 	"github.com/ooqls/go-log"
 	"go.uber.org/zap"
 )
@@ -14,11 +15,13 @@ import (
 func init() {
 	flag.StringVar(&registryPathFlag, "registry", "", "Path to the registry path")
 	flag.StringVar(&sqlFilesFlag, "sql-files", "", "Comma separated list of files")
-	flag.StringVar(&RsaPrivKeyPathFlag, "rsa-private-key", "", "Path to an RSA private key")
-	flag.StringVar(&RsaPubKeyPathFlag, "rsa-public-key", "", "Path to the RSA public key")
-	flag.StringVar(&JwtPrivKeyPathFlag, "jwt-private-key", "", "Path to a JWT private key")
-	flag.StringVar(&JwtPubKeyPathFlag, "jwt-public-key", "", "Path to a jwt public key")
-	flag.StringVar(&caBundlePathFlag, "ca-bundle", "", "Path to a ca bundle")
+	flag.StringVar(&rsaPrivKeyPathFlag, "rsa-private-key", "", "Path to an RSA private key")
+	flag.StringVar(&rsaPubKeyPathFlag, "rsa-public-key", "", "Path to the RSA public key")
+	flag.StringVar(&jwtPrivKeyPathFlag, "jwt-private-key", "", "Path to a JWT private key")
+	flag.StringVar(&jwtPubKeyPathFlag, "jwt-public-key", "", "Path to a jwt public key")
+	flag.StringVar(&tlsKeyPathFlag, "tls-key-path", "", "Path to the TLS key file")
+	flag.StringVar(&tlsCertPathFlag, "tls-cert-path", "", "Path to the TLS cert file")
+	flag.StringVar(&tlsCaPathFlag, "tls-ca-path", "", "Path to the TLS CA file")
 	flag.StringVar(&healthPathFlag, "health-path", "", "Path to the health path")
 	flag.IntVar(&docsPortFlag, "docs-port", 8080, "Port to serve docs on")
 	flag.StringVar(&docsPathFlag, "docs-path", "/docs/", "Path to the docs directory")
@@ -60,7 +63,13 @@ func (a *app) IsRunning() bool {
 }
 
 func (a *app) OnStartup(f func(ctx *AppContext) error) *app {
-	a.setup = f
+	a.setup = func(ctx *AppContext) error {
+		if a.features.Gin.Enabled {
+			a.features.Gin.Engine.Use(cors.New(*a.features.Gin.Cors))
+		}
+
+		return f(ctx)
+	}
 	return a
 }
 

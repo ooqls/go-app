@@ -7,6 +7,12 @@ import (
 	"os"
 )
 
+var (
+	tlsKeyPathFlag  string = "tls-key-path"
+	tlsCertPathFlag string = "tls-cert-path"
+	tlsCaPathFlag   string = "tls-ca-path"
+)
+
 const (
 	tls_caFileOpt   string = "opt-server-ca-pool"
 	tls_crtOpt      string = "opt-server-cert"
